@@ -1,0 +1,383 @@
+#!/bin/sh
+
+# Usage:
+#   Legacy mode:
+#     ./getStationData "eth7:5G eth6:2G"
+#     ./getStationData eth7:5G eth6:2G
+#
+#   Flag mode:
+#     ./getStationData -i "eth7:5G eth6:2G wl0.1:2G_1"
+#     ./getStationData -i "eth7:5G eth6:2G wl0.1:2G_1" -m /tmp/dhcp_mac_dns.txt
+#
+# Default if no arguments are passed:
+#   eth7:5G eth6:2G
+#
+# Mapping file format (TSV or whitespace-delimited) expected:
+#   MAC<ws>IP<ws>HOSTNAME
+# Example:
+#   00:11:22:33:44:55    192.168.1.10    iphone.home
+
+export HOSTNAME=$(hostname)
+
+JQ=/usr/bin/jq
+CLIENTLIST=/tmp/clientlist.json
+DEFAULT_WIFI_MAPPINGS="eth7:5G eth6:2G"
+
+wifiMappings=""
+MAPPINGS_FILE=""
+
+usage() {
+        echo "Usage:" >&2
+        echo "  $0 -i \"interface:radio [interface:radio ...]\" [-m /path/to/mapping.tsv]" >&2
+        echo "" >&2
+        echo "Required:" >&2
+        echo "  -i    interface:radio mappings, quoted as one argument" >&2
+        echo "" >&2
+        echo "Optional:" >&2
+        echo "  -m    mapping file (TSV/whitespace-delimited: MAC IP HOSTNAME)" >&2
+        exit 2
+}
+
+lookup_from_mapping_file() {
+        mac="$1"
+
+        [ -n "$MAPPINGS_FILE" ] || return 1
+        [ -f "$MAPPINGS_FILE" ] || return 1
+
+        awk -v mac="$mac" '
+        BEGIN {
+                mac_lc = tolower(mac)
+        }
+        NF >= 2 {
+                file_mac = tolower($1)
+                if (file_mac == mac_lc) {
+                        print $2 "\t" $3
+                        exit
+                }
+        }
+        ' "$MAPPINGS_FILE"
+}
+
+lookup_from_clientlist() {
+        radio="$1"
+        client="$2"
+
+        if ! type "$JQ" > /dev/null 2>&1; then
+                echo "jq not installed. Please install with opkg install jq" >&2
+                exit 2
+        fi
+
+        if [ ! -f "$CLIENTLIST" ]; then
+                echo "client list not found: $CLIENTLIST" >&2
+                exit 2
+        fi
+
+        IP=$("$JQ" -r '.[][env.RADIO][env.CLIENT].ip // empty' "$CLIENTLIST")
+        CLIENT_HOSTNAME=""
+
+        export IP
+        export CLIENT_HOSTNAME
+}
+
+# Parse arguments: require -i, allow optional -m
+while [ "$#" -gt 0 ]; do
+        case "$1" in
+                -i)
+                        [ -n "$2" ] || usage
+                        wifiMappings="$2"
+                        shift 2
+                        ;;
+                -m)
+                        [ -n "$2" ] || usage
+                        MAPPINGS_FILE="$2"
+                        shift 2
+                        ;;
+                *)
+                        echo "unknown argument: $1" >&2
+                        usage
+                        ;;
+        esac
+done
+
+[ -n "$wifiMappings" ] || {
+        echo "missing required -i \"interface:radio ...\" argument" >&2
+        usage
+}
+
+# Validate mapping file if provided
+if [ -n "$MAPPINGS_FILE" ] && [ ! -f "$MAPPINGS_FILE" ]; then
+        echo "mapping file not found: $MAPPINGS_FILE" >&2
+        exit 2
+fi
+
+# Validate interface:radio mappings before running
+for mapping in $wifiMappings; do
+        case $mapping in
+                *:*)
+                        wlan=${mapping%%:*}
+                        RADIO=${mapping#*:}
+                        ;;
+                *)
+                        echo "invalid interface mapping: $mapping" >&2
+                        echo "expected format: interface:radio (example: eth7:5G)" >&2
+                        exit 2
+                        ;;
+        esac
+
+        if [ -z "$wlan" ] || [ -z "$RADIO" ]; then
+                echo "invalid interface mapping: $mapping" >&2
+                echo "interface and radio must both be non-empty" >&2
+                exit 2
+        fi
+
+        if ! wl -i "$wlan" assoclist > /dev/null 2>&1; then
+                echo "invalid or unavailable wireless interface: $wlan" >&2
+                exit 2
+        fi
+done
+
+(
+for mapping in $wifiMappings; do
+        wlan=${mapping%%:*}
+        RADIO=${mapping#*:}
+
+        export wlan
+        export RADIO
+
+        clients=$(wl -i "$wlan" assoclist | awk '{print $2}')
+
+        for CLIENT in $clients; do
+                export CLIENT
+
+                IP=""
+                CLIENT_HOSTNAME=""
+
+                if [ -n "$MAPPINGS_FILE" ]; then
+                        lookup=$(lookup_from_mapping_file "$CLIENT")
+                        if [ -n "$lookup" ]; then
+                                IP=$(printf "%s\n" "$lookup" | awk -F '\t' '{print $1}')
+                                CLIENT_HOSTNAME=$(printf "%s\n" "$lookup" | awk -F '\t' '{print $2}')
+                        fi
+                else
+                        lookup_from_clientlist "$RADIO" "$CLIENT"
+                fi
+
+                export IP
+                export CLIENT_HOSTNAME
+
+                echo "CLIENT_START $HOSTNAME $RADIO $wlan $CLIENT $IP $CLIENT_HOSTNAME"
+                wl -i "$wlan" sta_info "$CLIENT"
+        done
+done
+) | awk -F ': *' '
+
+function esc(s){
+        gsub(/\\/,"\\\\",s)
+        gsub(/"/,"\\\"",s)
+        return s
+}
+
+function trim(s){
+        gsub(/^[ \t]+/,"",s)
+        gsub(/[ \t]+$/,"",s)
+        return s
+}
+
+BEGIN{
+        printf "["
+        obj=0
+        noise=0
+}
+
+$1 ~ /^CLIENT_START/ {
+        if(obj>0)
+                printf "},"
+
+        obj++
+        noise=0
+
+        printf "{"
+
+        split($0,a," ")
+
+        printf "\"host\":\"%s\",",esc(a[2])
+        printf "\"radio\":\"%s\",",esc(a[3])
+        printf "\"interface\":\"%s\",",esc(a[4])
+        printf "\"client\":\"%s\",",esc(a[5])
+        printf "\"ip\":\"%s\",",esc(a[6])
+        printf "\"client_hostname\":\"%s\",",esc(a[7])
+
+        next
+}
+
+/state: / {
+        printf "\"state\":\"%s\",", esc($2)
+}
+
+/connection: / {
+        printf "\"connection\":\"%s\",", esc($2)
+}
+
+/auth: / {
+        printf "\"auth\":\"%s\",", esc($2)
+}
+
+/crypto: / {
+        printf "\"crypto\":\"%s\",", esc($2)
+}
+
+/idle/ {
+        split($0, a, /[[:space:]]+/)
+        printf "\"idle_seconds\":%s,", a[3]
+}
+
+/in network/ {
+        split($0, a, /[[:space:]]+/)
+        printf "\"in_network_seconds\":%s,", a[4]
+}
+
+/tx data pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_data_pkts\":%s,", $2
+}
+
+/tx data bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_data_bytes\":%s,", $2
+}
+
+/tx ucast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_ucast_pkts\":%s,", $2
+}
+
+/tx ucast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_ucast_bytes\":%s,", $2
+}
+
+/tx mcast\/bcast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_mcast_bcast_pkts\":%s,", $2
+}
+
+/tx mcast\/bcast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_mcast_bcast_bytes\":%s,", $2
+}
+
+/tx failures/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_failures\":%s,", $2
+}
+
+/rx data pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_data_pkts\":%s,", $2
+}
+
+/rx data bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_data_bytes\":%s,", $2
+}
+
+/rx ucast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_ucast_pkts\":%s,", $2
+}
+
+/rx ucast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_ucast_bytes\":%s,", $2
+}
+
+/rx mcast\/bcast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_mcast_bcast_pkts\":%s,", $2
+}
+
+/rx mcast\/bcast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_mcast_bcast_bytes\":%s,", $2
+}
+
+/rate of last tx pkt/ {
+        split(trim($2),txrate," ")
+        printf "\"rate_of_last_tx_pkt\":%s,", txrate[1]
+}
+
+/rate of last rx pkt/ {
+        split(trim($2),rxrate," ")
+        printf "\"rate_of_last_rx_pkt\":%s,", rxrate[1]
+}
+
+/rx decrypt succeeds/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_decrypt_succeeds\":%s,", $2
+}
+
+/rx decrypt failures/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_decrypt_failures\":%s,", $2
+}
+
+/tx data pkts retried/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_data_pkts_retried\":%s,", $2
+}
+
+/tx data pkts retry exhausted/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_data_pkts_retry_exhausted\":%s,", $2
+}
+
+/per antenna average rssi of rx data frames/ {
+        split(trim($2),r," ")
+
+        sum=0
+        count=0
+
+        if(r[1] < 0){ sum+=r[1]; count++ }
+        if(r[2] < 0){ sum+=r[2]; count++ }
+        if(r[3] < 0){ sum+=r[3]; count++ }
+        if(r[4] < 0){ sum+=r[4]; count++ }
+
+        avg = (count ? int(sum/count) : 0)
+
+        printf "\"avg_rssi\":%s,", avg
+}
+
+/per antenna noise floor/ {
+        split(trim($2),f," ")
+
+        sum=0
+        c=0
+
+        if(f[1] < 0){ sum+=f[1]; c++ }
+        if(f[2] < 0){ sum+=f[2]; c++ }
+        if(f[3] < 0){ sum+=f[3]; c++ }
+        if(f[4] < 0){ sum+=f[4]; c++ }
+
+        noise = (c ? int(sum/c) : 0)
+
+        printf "\"noise_floor\":%d,", noise
+}
+
+/smoothed rssi: / {
+        rssi=$2
+        snr = rssi - noise
+        printf "\"smoothed_rssi\":%s,", rssi
+        printf "\"snr\":%s,", snr
+}
+
+/link bandwidth/ {
+        split($0, a, /[[:space:]]+/)
+        printf "\"link_bandwidth\":%s", a[4]
+}
+
+END{
+        if(obj>0)
+                printf "}"
+        printf "]\n"
+}
+'
