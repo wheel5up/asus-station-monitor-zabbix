@@ -1,0 +1,240 @@
+#!/bin/sh
+
+IFACE="${1:-eth7}"
+
+{
+    echo "__TXPWR__"
+    wl -i "$IFACE" txpwr1 2>/dev/null
+    echo "__ASSOCLIST__"
+    wl -i "$IFACE" assoclist 2>/dev/null
+    echo "__COUNTERS__"
+    wl -i "$IFACE" counters 2>/dev/null
+    echo "__STATUS__"
+    wl -i "$IFACE" status 2>/dev/null
+    echo "__CHANIM__"
+    wl -i "$IFACE" chanim_stats 2>/dev/null
+} | awk '
+
+BEGIN {
+    section = ""
+    data["clients"] = 0
+
+    wanted["counters_version"] = 1
+    wanted["txframe"] = 1
+    wanted["rxframe"] = 1
+    wanted["txbyte"] = 1
+    wanted["rxbyte"] = 1
+    wanted["txretrans"] = 1
+    wanted["txfail"] = 1
+    wanted["txlost"] = 1
+    wanted["txper_ucastdt"] = 1
+    wanted["txper_rts"] = 1
+    wanted["rxcrsglitch"] = 1
+    wanted["rxbadplcp"] = 1
+    wanted["rxcrc"] = 1
+    wanted["rxbeaconobss"] = 1
+    wanted["txbcnloss"] = 1
+    wanted["txdropped"] = 1
+}
+
+$0 == "__ASSOCLIST__" {
+    section = "assoc"
+    next
+}
+
+$0 == "__COUNTERS__" {
+    section = "counters"
+    next
+}
+
+$0 == "__STATUS__" {
+    section = "status"
+    next
+}
+
+$0 == "__CHANIM__" {
+    section = "chanim"
+    next
+}
+
+$0 == "__TXPWR__" {
+    section = "txpwr"
+    next
+}
+
+section == "txpwr" && $1 == "TxPower" {
+    val = $5
+    data["txpower_dbm"] = val
+    next
+}
+
+section == "counters" && /^counters_version/ {
+    if ($2 != 30) {
+        print "{}"
+        exit
+    }
+}
+
+section == "counters" {
+    for (i = 1; i < NF; i += 2) {
+        key = $i
+        val = $(i + 1)
+
+        if (!(key in wanted)) {
+            continue
+        }
+
+        if (key == "txper_ucastdt" || key == "txper_rts") {
+            gsub(/%/, "", val)
+        }
+
+        data[key] = val
+    }
+    next
+}
+
+section == "assoc" && $1 == "assoclist" {
+    data["clients"]++
+    next
+}
+
+section == "status" && $1 == "SSID:" {
+    sub(/^SSID: "/, "", $0)
+    sub(/"$/, "", $0)
+    data["ssid"] = $0
+    next
+}
+
+section == "status" && $1 == "BSSID:" {
+    data["bssid"] = $2
+    next
+}
+
+section == "status" && $1 == "Mode:" && NF >= 13 {
+    split($0, f, " ")
+
+    if (f[9] == "noise:") {
+        data["noise"] = f[10]
+    }
+
+    if (f[12] == "Channel:") {
+        split(f[13], c, "/")
+        data["channel"] = c[1]
+        ch = c[1] + 0
+
+        if (ch == 36 || ch == 40 || ch == 44 || ch == 48) {
+            data["channel_band"] = "UNII-1"
+            data["dfs"] = "false"
+        }
+        else if (ch == 52 || ch == 56 || ch == 60 || ch == 64) {
+            data["channel_band"] = "UNII-2A"
+            data["dfs"] = "true"
+        }
+        else if (ch >= 100 && ch <= 144) {
+            data["channel_band"] = "UNII-2C"
+            data["dfs"] = "true"
+        }
+        else if (ch == 149 || ch == 153 || ch == 157 || ch == 161 || ch == 165) {
+            data["channel_band"] = "UNII-3"
+            data["dfs"] = "false"
+        }
+    }
+
+    next
+}
+section == "status" && $1 == "Chanspec:" && NF >= 5 {
+    split($0, f, " ")
+    v = f[5]
+    gsub(/MHz/, "", v)
+    data["bandwidth"] = v
+
+    next
+}
+
+section == "status" && $1 == "QBSS" {
+    split($0, f, " ")
+    if (NF >= 6) {
+        v = f[5]
+        gsub(/[()%]/, "", v)
+        data["qbss_utilization"] = v
+    }
+    next
+}
+
+section == "chanim" && $1 == "version:" {
+    next
+}
+
+section == "chanim" && $1 == "chanspec" {
+    next
+}
+
+section == "chanim" && NF >= 16 {
+    data["chanim_chanspec"] = $1
+    data["chanim_tx"] = $2
+    data["chanim_inbss"] = $3
+    data["chanim_obss"] = $4
+    data["chanim_nocat"] = $5
+    data["chanim_nopkt"] = $6
+    data["chanim_doze"] = $7
+    data["chanim_txop"] = $8
+    data["chanim_goodtx"] = $9
+    data["chanim_badtx"] = $10
+    data["chanim_glitch"] = $11
+    data["chanim_badplcp"] = $12
+    data["chanim_knoise"] = $13
+    data["chanim_idle"] = $14
+    data["chanim_busy"] = $15
+    next
+}
+
+END {
+    if (data["counters_version"] != 30) {
+        print "{}"
+        exit
+    }
+    if (("chanim_tx" in data) && ("chanim_inbss" in data)) {
+        data["airtime_self"] = data["chanim_tx"] + data["chanim_inbss"]
+    }
+
+    if (("chanim_obss" in data) && ("chanim_busy" in data) && data["chanim_busy"] > 0) {
+        data["neighbors_share_of_busy_pct"] = (data["chanim_obss"] / data["chanim_busy"]) * 100
+    }
+
+    if (("txretrans" in data) && ("txframe" in data) && data["txframe"] > 0) {
+        data["retry_ratio"] = data["txretrans"] / data["txframe"]
+    }
+
+    if (("txfail" in data) && ("txframe" in data) && data["txframe"] > 0) {
+        data["fail_ratio"] = data["txfail"] / data["txframe"]
+    }
+
+    printf "{"
+    first = 1
+
+    for (key in data) {
+        if (!first) {
+            printf ","
+        }
+
+        printf "\"%s\":", key
+
+        if (key == "ssid" || key == "bssid" || key == "channel_band" || key == "chanim_chanspec") {
+            printf "\"%s\"", json_escape(data[key])
+        } else {
+            printf "%s", data[key]
+        }
+
+        first = 0
+    }
+
+    printf "}\n"
+}
+
+function json_escape(s,    t) {
+    t = s
+    gsub(/\\/, "\\\\", t)
+    gsub(/"/, "\\\"", t)
+    return t
+}
+'
