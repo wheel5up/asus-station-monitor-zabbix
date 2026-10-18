@@ -1,0 +1,1383 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 36bff6c29af64692839d077febfc7079
+      name: 'Templates/Network devices'
+  templates:
+    - uuid: 4d6216cc2ba24519a678e5be2aad4ff2
+      template: 'Asus Client Data'
+      name: 'Asus Client Data'
+      groups:
+        - name: 'Templates/Network devices'
+      items:
+        - uuid: 99cd63676f5e495fa6cafe217b0d6ec3
+          name: 'station data'
+          key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          value_type: TEXT
+          preprocessing:
+            - type: MATCHES_REGEX
+              parameters:
+                - '^\s*[\[{]'
+              error_handler: DISCARD_VALUE
+        - uuid: 7c62332b626945eebfd0313caaf6678e
+          name: avg_rssi
+          type: DEPENDENT
+          key: 'client.stats[avg_rssi]'
+          value_type: FLOAT
+          trends: '0'
+          units: dBm
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.avg_rssi
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: avg_rssi
+        - uuid: 09e5d6afb779495ab1fe465af989f5e2
+          name: chanspec
+          type: DEPENDENT
+          key: 'client.stats[chanspec]'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanspec
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: chanspec
+        - uuid: 3670949a78eb417f9756daa61411db8d
+          name: connection
+          type: DEPENDENT
+          key: 'client.stats[connection]'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.connection
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '86400'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: connection
+        - uuid: d4aed79b02bf436bad527bb3beeedc5f
+          name: 'DNS name'
+          type: DEPENDENT
+          key: 'client.stats[dns]'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.client_hostname
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: dns
+        - uuid: fc21d86fa5c247009744754ecd73b0a1
+          name: idle_seconds
+          type: DEPENDENT
+          key: 'client.stats[idle_seconds]'
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.idle_seconds
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: idle_seconds
+        - uuid: 1064dfa6876a44df8b3cc86ad282ca4e
+          name: interface
+          type: DEPENDENT
+          key: 'client.stats[interface]'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.interface
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: interface
+        - uuid: e7fdee2a124f482c92add73465da4bf9
+          name: in_network_seconds
+          type: DEPENDENT
+          key: 'client.stats[in_network_seconds]'
+          units: s
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.in_network_seconds
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: in_network_seconds
+        - uuid: 52d65825664a48b28234479ddf3bfefe
+          name: link_bandwidth
+          type: DEPENDENT
+          key: 'client.stats[link_bandwidth]'
+          value_type: FLOAT
+          trends: '0'
+          units: '!Mhz'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.link_bandwidth
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: link_bandwidth
+        - uuid: ee9a7334dee64d158703b6824267b1c9
+          name: MAC
+          type: DEPENDENT
+          key: 'client.stats[mac]'
+          value_type: TEXT
+          inventory_link: MACADDRESS_A
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.client
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: mac
+        - uuid: 19d4eb7add0f4c01b1cfae4b5cc1031d
+          name: noise_floor
+          type: DEPENDENT
+          key: 'client.stats[noise_floor]'
+          value_type: FLOAT
+          trends: '0'
+          units: dBm
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.noise_floor
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: noise_floor
+        - uuid: a9cc19e04bcd40dab004046b99d4a347
+          name: radio
+          type: DEPENDENT
+          key: 'client.stats[radio]'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.radio
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: radio
+        - uuid: eca24ef0eefe4c2ea8dae7c94dac4b98
+          name: rate_of_last_rx_pkt
+          type: DEPENDENT
+          key: 'client.stats[rate_of_last_rx_pkt]'
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rate_of_last_rx_pkt
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rate_of_last_rx_pkt
+        - uuid: c0d4393fc983471caa76388121e9a1a9
+          name: rate_of_last_tx_pkt
+          type: DEPENDENT
+          key: 'client.stats[rate_of_last_tx_pkt]'
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rate_of_last_tx_pkt
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: rate_of_last_tx_pkt
+        - uuid: 933db8b9a9ef4ea8acb44791531ca172
+          name: rx_data_bytes
+          type: DEPENDENT
+          key: 'client.stats[rx_data_bytes]'
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_data_bytes
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_data_bytes
+        - uuid: 76ece5585d834e02a9d92e24f3ce39c5
+          name: rx_data_pkts
+          type: DEPENDENT
+          key: 'client.stats[rx_data_pkts]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_data_pkts
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-1'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_data_pkts
+        - uuid: 5254b7427733430d81442cd29470c94e
+          name: rx_decrypt_failures
+          type: DEPENDENT
+          key: 'client.stats[rx_decrypt_failures]'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_decrypt_failures
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_decrypt_failures
+        - uuid: 9170c6dd751c40df8877d210ed122ce4
+          name: rx_decrypt_succeeds
+          type: DEPENDENT
+          key: 'client.stats[rx_decrypt_succeeds]'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_decrypt_succeeds
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_decrypt_succeeds
+        - uuid: 3992e17b4b9344bb87331b809fe6f042
+          name: rx_mcast_bcast_bytes
+          type: DEPENDENT
+          key: 'client.stats[rx_mcast_bcast_bytes]'
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_mcast_bcast_bytes
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_mcast_bcast_bytes
+        - uuid: 408f64a8d3f8439e81622fbd4199626b
+          name: rx_mcast_bcast_pkts
+          type: DEPENDENT
+          key: 'client.stats[rx_mcast_bcast_pkts]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_mcast_bcast_pkts
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-1'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_mcast_bcast_pkts
+        - uuid: 2a938f9212ed40e19699a2874c79a18d
+          name: rx_total_pkts_retried
+          type: DEPENDENT
+          key: 'client.stats[rx_total_pkts_retried]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_total_pkts_retried
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_total_pkts_retried
+        - uuid: 47c274ccd3924bcb9f6daf52e598b991
+          name: rx_ucast_bytes
+          type: DEPENDENT
+          key: 'client.stats[rx_ucast_bytes]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_ucast_bytes
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_ucast_bytes
+        - uuid: aa488a99202a42aa87982c0cda20c340
+          name: rx_ucast_pkts
+          type: DEPENDENT
+          key: 'client.stats[rx_ucast_pkts]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rx_ucast_pkts
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-1'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: RX
+            - tag: metric
+              value: rx_ucast_pkts
+        - uuid: 7fd8cc4e4cf24d54b7772987fde07c40
+          name: smoothed_rssi
+          type: DEPENDENT
+          key: 'client.stats[smoothed_rssi]'
+          value_type: FLOAT
+          trends: '0'
+          units: dBm
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.smoothed_rssi
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: smoothed_rssi
+        - uuid: 0aecd6c8447e47f0b1e648eda9dda361
+          name: snr
+          type: DEPENDENT
+          key: 'client.stats[snr]'
+          value_type: FLOAT
+          trends: '0'
+          units: dB
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.snr
+              error_handler: DISCARD_VALUE
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: snr
+        - uuid: 8c90139a69654183b60d7ad4e7203cc8
+          name: state
+          type: DEPENDENT
+          key: 'client.stats[state]'
+          value_type: TEXT
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.state
+              error_handler: DISCARD_VALUE
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: metric
+              value: state
+        - uuid: e9da01b487584ceb995732b24cdd2a30
+          name: tx_data_pkts_retried
+          type: DEPENDENT
+          key: 'client.stats[tx_data_pkts_retried]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_data_pkts_retried
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_data_pkts_retried
+        - uuid: c16076e1a42146d4af8506adedb2b83d
+          name: tx_failures
+          type: DEPENDENT
+          key: 'client.stats[tx_failures]'
+          trends: '0'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_failures
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_failures
+        - uuid: 6d154254561f4f2fb71a1f8b4f88d11d
+          name: tx_mcast_bcast_bytes
+          type: DEPENDENT
+          key: 'client.stats[tx_mcast_bcast_bytes]'
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_mcast_bcast_bytes
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_mcast_bcast_bytes
+        - uuid: cd97ddcb9ca340a98fa7de5dc8824cef
+          name: tx_mcast_bcast_pkts
+          type: DEPENDENT
+          key: 'client.stats[tx_mcast_bcast_pkts]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_mcast_bcast_pkts
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_mcast_bcast_pkts
+        - uuid: 3140aa87afe34f989aa335b94398c3e6
+          name: tx_pkts_retries
+          type: DEPENDENT
+          key: 'client.stats[tx_pkts_retries]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_pkts_retries
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_pkts_retries
+        - uuid: 174c1befef1441e9bf41ab9aba4a5b0d
+          name: tx_pkts_retry_exhausted
+          type: DEPENDENT
+          key: 'client.stats[tx_pkts_retry_exhausted]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_pkts_retry_exhausted
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_pkts_retry_exhausted
+        - uuid: 0cfb492bff2b416396085dedd540de1b
+          name: tx_total_bytes
+          type: DEPENDENT
+          key: 'client.stats[tx_total_bytes]'
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_total_bytes
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_total_bytes
+        - uuid: b87cce5a0e5d44629778a2d3e41ceb4b
+          name: tx_total_pkts
+          type: DEPENDENT
+          key: 'client.stats[tx_total_pkts]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_total_pkts
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_total_pkts
+        - uuid: 44f576de411c49b584420a2e4be4aa5a
+          name: tx_total_pkts_sent
+          type: DEPENDENT
+          key: 'client.stats[tx_total_pkts_sent]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_total_pkts_sent
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_total_pkts_sent
+        - uuid: 5da9ca9e95024f448d328ae83f1d441a
+          name: tx_ucast_bytes
+          type: DEPENDENT
+          key: 'client.stats[tx_ucast_bytes]'
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_ucast_bytes
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_ucast_bytes
+        - uuid: 9985d89f682b4b7ba416f5a65a009ed6
+          name: tx_ucast_pkts
+          type: DEPENDENT
+          key: 'client.stats[tx_ucast_pkts]'
+          value_type: FLOAT
+          trends: '0'
+          units: pps
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.tx_ucast_pkts
+              error_handler: DISCARD_VALUE
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: 'client.data[{$INTERFACE},{$RADIO},{$CLIENT},{$MAPPING_FILE}]'
+          tags:
+            - tag: direction
+              value: TX
+            - tag: metric
+              value: tx_ucast_pkts
+      dashboards:
+        - uuid: c1f47e9606fb401bbe775b05bab3f29e
+          name: 'Client status'
+          pages:
+            - widgets:
+                - type: item
+                  width: '11'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[dns]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_show
+                      value: '0'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: SNR
+                  'y': '1'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[snr]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'Smoothed RSSI'
+                  'y': '3'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[smoothed_rssi]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'Noise Floor'
+                  'y': '5'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[noise_floor]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'Average RSSI DBmv'
+                  'y': '7'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[avg_rssi]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  'y': '9'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[idle_seconds]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                - type: item
+                  name: 'Last TX pkt rate'
+                  x: '7'
+                  'y': '1'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[rate_of_last_tx_pkt]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'Last RX pkt rate'
+                  x: '7'
+                  'y': '3'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[rate_of_last_rx_pkt]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'TX Failures'
+                  x: '7'
+                  'y': '5'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[tx_failures]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                - type: item
+                  name: 'RX decrypt fail'
+                  x: '7'
+                  'y': '7'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[rx_decrypt_failures]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'TX pkts retries'
+                  x: '7'
+                  'y': '9'
+                  width: '7'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[tx_pkts_retries]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: sparkline.time_period._reference
+                      value: DASHBOARD._timeperiod
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  x: '11'
+                  width: '9'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[mac]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_show
+                      value: '0'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: 'In Network'
+                  x: '14'
+                  'y': '1'
+                  width: '6'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[in_network_seconds]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                - type: item
+                  x: '14'
+                  'y': '3'
+                  width: '6'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[interface]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                - type: item
+                  x: '14'
+                  'y': '5'
+                  width: '6'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[radio]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                - type: item
+                  name: 'Link Bandwidth'
+                  x: '14'
+                  'y': '7'
+                  width: '6'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[link_bandwidth]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_pos
+                      value: '3'
+                    - type: INTEGER
+                      name: units_size
+                      value: '20'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: item
+                  name: Chanel
+                  x: '14'
+                  'y': '9'
+                  width: '6'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'Asus Client Data'
+                        key: 'client.stats[chanspec]'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: units_bold
+                      value: '0'
+                    - type: INTEGER
+                      name: units_show
+                      value: '0'
+                    - type: INTEGER
+                      name: value_v_pos
+                      value: '0'
+                - type: svggraph
+                  name: 'RX/TX pkts'
+                  x: '20'
+                  width: '52'
+                  height: '4'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '6'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: rx_data_pkts
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: tx_total_pkts
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: STRING
+                      name: ds.1.color
+                      value: FF8000
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: tx_pkts_retries
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '3'
+                    - type: STRING
+                      name: ds.2.color
+                      value: FF0000
+                    - type: INTEGER
+                      name: ds.2.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.2.items.0
+                      value: tx_failures
+                    - type: INTEGER
+                      name: ds.2.width
+                      value: '2'
+                    - type: INTEGER
+                      name: lefty_scale
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: GRPAX
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'RX/TX bits'
+                  x: '20'
+                  'y': '4'
+                  width: '52'
+                  height: '4'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '6'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: tx_total_bytes
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: rx_data_bytes
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: lefty_scale
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: TRHJI
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'RX/TX ucast bits'
+                  x: '20'
+                  'y': '8'
+                  width: '52'
+                  height: '4'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '6'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: rx_ucast_bytes
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: tx_ucast_bytes
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: lefty_scale
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: FMADY
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+  graphs:
+    - uuid: 81801b6cf84141548b4308b753d2f68d
+      name: 'rx/tx mcast/bcast pkts'
+      yaxismax: '0'
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Asus Client Data'
+            key: 'client.stats[rx_mcast_bcast_pkts]'
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Asus Client Data'
+            key: 'client.stats[tx_mcast_bcast_pkts]'
+    - uuid: a72ce11ed92c4b2b98dd8bfc22e9d6c5
+      name: 'rx/tx mcast bytes'
+      yaxismax: '0'
+      graph_items:
+        - color: 1A7C11
+          calc_fnc: ALL
+          item:
+            host: 'Asus Client Data'
+            key: 'client.stats[rx_mcast_bcast_bytes]'
+        - sortorder: '1'
+          color: '274482'
+          calc_fnc: ALL
+          item:
+            host: 'Asus Client Data'
+            key: 'client.stats[tx_mcast_bcast_bytes]'

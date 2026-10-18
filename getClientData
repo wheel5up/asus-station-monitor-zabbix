@@ -1,0 +1,343 @@
+#!/bin/sh
+
+# Usage:
+#   ./getClientData eth7 5G 44:61:32:DD:00:CA /tmp/client_mapping.txt
+#
+# Arguments:
+#   $1 = interface
+#   $2 = radio
+#   $3 = mac-address
+#   $4 = mapping file path (optional; preferred source if present)
+
+export HOSTNAME=$(hostname)
+
+CLIENTLIST=/tmp/clientlist.json
+JQ=/usr/bin/jq
+
+if [ "$#" -lt 3 ] || [ "$#" -gt 4 ]
+then
+        echo "usage: $0 interface radio mac-address [mapping-file]" >&2
+        echo "example: $0 eth7 5G 44:61:32:DD:00:CA /tmp/client_mapping.txt" >&2
+        exit 2
+fi
+
+wlan=$1
+RADIO=$2
+CLIENT=$3
+MAPFILE=${4:-}
+
+if [ -z "$wlan" ] || [ -z "$RADIO" ]
+then
+        echo "invalid interface or radio" >&2
+        echo "interface and radio must both be non-empty" >&2
+        exit 2
+fi
+
+if ! wl -i "$wlan" assoclist > /dev/null 2>&1
+then
+        echo "invalid or unavailable wireless interface: $wlan" >&2
+        exit 2
+fi
+
+case $CLIENT in
+        [0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f]:[0-9A-Fa-f][0-9A-Fa-f])
+                ;;
+        *)
+                echo "invalid mac address: $CLIENT" >&2
+                echo "expected format: 44:61:32:DD:00:CA" >&2
+                exit 2
+                ;;
+esac
+
+# Normalize MAC to uppercase to match wl output consistently
+CLIENT=$(echo "$CLIENT" | tr '[:lower:]' '[:upper:]')
+
+# Verify the client is currently associated to this interface
+if ! wl -i "$wlan" assoclist | awk '{print toupper($2)}' | grep -Fx "$CLIENT" > /dev/null 2>&1
+then
+        echo "client $CLIENT is not currently associated to interface $wlan" >&2
+        exit 1
+fi
+
+IP=""
+CLIENT_HOSTNAME=""
+LOOKUP_SOURCE=""
+
+resolve_from_mapfile() {
+        [ -n "$MAPFILE" ] || return 1
+        [ -f "$MAPFILE" ] || return 1
+
+        LOOKUP=$(
+                awk -v mac="$CLIENT" '
+                BEGIN {
+                        mac = toupper(mac)
+                }
+                NF >= 3 {
+                        if (toupper($1) == mac) {
+                                print $2 "\t" $3
+                                exit
+                        }
+                }
+                ' "$MAPFILE"
+        )
+
+        [ -n "$LOOKUP" ] || return 1
+
+        IP=$(printf '%s\n' "$LOOKUP" | awk -F '\t' '{print $1}')
+        CLIENT_HOSTNAME=$(printf '%s\n' "$LOOKUP" | awk -F '\t' '{print $2}')
+        LOOKUP_SOURCE="mapfile"
+        return 0
+}
+
+resolve_from_clientlist() {
+        [ -f "$CLIENTLIST" ] || return 1
+
+        if ! type "$JQ" > /dev/null 2>&1
+        then
+                return 1
+        fi
+
+        export RADIO
+        export CLIENT
+
+        # Keep this fairly defensive because clientlist.json structure can vary.
+	IP=$("$JQ" -r '.[][env.RADIO][env.CLIENT].ip' "$CLIENTLIST")
+        [ -n "$IP" ] || return 1
+        LOOKUP_SOURCE="clientlist"
+        return 0
+}
+
+# Prefer pfSense mapping file, then fall back to local clientlist.json
+if ! resolve_from_mapfile
+then
+        resolve_from_clientlist || true
+fi
+
+wl -i "$wlan" sta_info "$CLIENT" | awk \
+        -v host="$HOSTNAME" \
+        -v radio="$RADIO" \
+        -v iface="$wlan" \
+        -v client="$CLIENT" \
+        -v ip="$IP" \
+        -v client_hostname="$CLIENT_HOSTNAME" \
+        -v lookup_source="$LOOKUP_SOURCE" \
+        -F ': *' '
+
+function esc(s){
+        gsub(/\\/,"\\\\",s)
+        gsub(/"/,"\\\"",s)
+        return s
+}
+
+function trim(s){
+        gsub(/^[ \t]+/,"",s)
+        gsub(/[ \t]+$/,"",s)
+        return s
+}
+
+BEGIN{
+        noise=0
+
+        printf "{"
+        printf "\"host\":\"%s\",",esc(host)
+        printf "\"radio\":\"%s\",",esc(radio)
+        printf "\"interface\":\"%s\",",esc(iface)
+        printf "\"client\":\"%s\",",esc(client)
+        printf "\"ip\":\"%s\",",esc(ip)
+        printf "\"client_hostname\":\"%s\",",esc(client_hostname)
+        printf "\"lookup_source\":\"%s\",",esc(lookup_source)
+}
+
+# string fields
+/chanspec/ {
+        split($0, a, /[[:space:]]+/)
+	spec = a[3]
+	sub(/\/.*/, "", spec)
+    	sub(/[a-zA-Z]+$/, "", spec)
+        printf "\"chanspec\":\"%s\",", spec
+}
+
+/state: / {
+        printf "\"state\":\"%s\",", esc($2)
+}
+
+/connection: / {
+        printf "\"connection\":\"%s\",", esc($2)
+}
+
+/auth: / {
+        printf "\"auth\":\"%s\",", esc($2)
+}
+
+/crypto: / {
+        printf "\"crypto\":\"%s\",", esc($2)
+}
+
+/idle/ {
+        split($0, a, /[[:space:]]+/)
+        printf "\"idle_seconds\":%s,", a[3]
+}
+
+/in network/ {
+        split($0, a, /[[:space:]]+/)
+        printf "\"in_network_seconds\":%s,", a[4]
+}
+
+/tx total pkts sent:/ {
+	printf "\"tx_total_pkts_sent\":%s,", $2
+}
+
+/rx total pkts retried/ {
+	printf "\"rx_total_pkts_retried\":%s,", $2
+}
+
+/tx total pkts:/ {
+	printf "\"tx_total_pkts\":%s,", $2
+}
+
+/tx total bytes/ {
+	printf "\"tx_total_bytes\":%s,", $2
+}
+
+/tx data pkts retried/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_data_pkts_retried\":%s,", $2
+}
+
+/tx data bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_data_bytes\":%s,", $2
+}
+
+/tx ucast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_ucast_pkts\":%s,", $2
+}
+
+/tx ucast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_ucast_bytes\":%s,", $2
+}
+
+/tx mcast\/bcast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_mcast_bcast_pkts\":%s,", $2
+}
+
+/tx mcast\/bcast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_mcast_bcast_bytes\":%s,", $2
+}
+
+/tx failures/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_failures\":%s,", $2
+}
+
+/rx data pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_data_pkts\":%s,", $2
+}
+
+/rx data bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_data_bytes\":%s,", $2
+}
+
+/rx ucast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_ucast_pkts\":%s,", $2
+}
+
+/rx ucast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_ucast_bytes\":%s,", $2
+}
+
+/rx mcast\/bcast pkts/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_mcast_bcast_pkts\":%s,", $2
+}
+
+/rx mcast\/bcast bytes/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_mcast_bcast_bytes\":%s,", $2
+}
+
+/rate of last tx pkt/ {
+        split(trim($2),txrate," ")
+        printf "\"rate_of_last_tx_pkt\":%s,", txrate[1]
+}
+
+/rate of last rx pkt/ {
+        split(trim($2),rxrate," ")
+        printf "\"rate_of_last_rx_pkt\":%s,", rxrate[1]
+}
+
+/rx decrypt succeeds/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_decrypt_succeeds\":%s,", $2
+}
+
+/rx decrypt failures/ {
+        gsub(/ /,"",$2)
+        printf "\"rx_decrypt_failures\":%s,", $2
+}
+
+/tx pkts retries/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_pkts_retries\":%s,", $2
+}
+
+/tx pkts retry exhausted/ {
+        gsub(/ /,"",$2)
+        printf "\"tx_pkts_retry_exhausted\":%s,", $2
+}
+
+/per antenna average rssi of rx data frames/ {
+        split(trim($2),r," ")
+
+        sum=0
+        count=0
+
+        if(r[1] < 0){ sum+=r[1]; count++ }
+        if(r[2] < 0){ sum+=r[2]; count++ }
+        if(r[3] < 0){ sum+=r[3]; count++ }
+        if(r[4] < 0){ sum+=r[4]; count++ }
+
+        avg = (count ? int(sum/count) : 0)
+
+        printf "\"avg_rssi\":%s,", avg
+}
+
+/per antenna noise floor/ {
+        split(trim($2),f," ")
+
+        sum=0
+        c=0
+
+        if(f[1] < 0){ sum+=f[1]; c++ }
+        if(f[2] < 0){ sum+=f[2]; c++ }
+        if(f[3] < 0){ sum+=f[3]; c++ }
+        if(f[4] < 0){ sum+=f[4]; c++ }
+
+        noise = (c ? int(sum/c) : 0)
+
+        printf "\"noise_floor\":%d,", noise
+}
+
+/smoothed rssi: / {
+        rssi=$2
+        snr = rssi - noise
+        printf "\"smoothed_rssi\":%s,", rssi
+        printf "\"snr\":%s,", snr
+}
+
+/link bandwidth/ {
+        split($0, a, /[[:space:]]+/)
+        printf "\"link_bandwidth\":%s", a[4]
+}
+
+END{
+        printf "}\n"
+}'
