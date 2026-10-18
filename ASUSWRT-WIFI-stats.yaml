@@ -1,0 +1,3633 @@
+zabbix_export:
+  version: '7.4'
+  template_groups:
+    - uuid: 36bff6c29af64692839d077febfc7079
+      name: 'Templates/Network devices'
+  host_groups:
+    - uuid: 900ab33e25af4f4b97c8e27054dab6b4
+      name: wifi
+  templates:
+    - uuid: c2c2263041de4c72891c711827dd0c9e
+      template: 'ASUSWRT WiFi stats'
+      name: 'ASUSWRT WiFi stats'
+      vendor:
+        name: wheeler
+        version: 4c8b134
+      groups:
+        - name: 'Templates/Network devices'
+      items:
+        - uuid: 3f15d92444ad44bab6c87069ffc041f1
+          name: 'get wifi station data'
+          key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+          value_type: TEXT
+        - uuid: cf5441e0aeb64aa69fac69f085e51368
+          name: 'Interface eth6 radio airtime_self'
+          type: DEPENDENT
+          key: radio.eth6.airtime_self
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used by this AP and its clients. Represents your network’s share of the channel.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.airtime_self
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: airtime_self
+            - tag: radio
+              value: 2G
+        - uuid: b3b94cd264034e92a831f3e17420908b
+          name: 'Interface eth6 radio bandwidth'
+          type: DEPENDENT
+          key: radio.eth6.bandwidth
+          trends: '0'
+          units: Mhz
+          description: 'Channel width in MHz (e.g., 20/40/80). Wider channels provide higher throughput but are more susceptible to interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bandwidth
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: bandwidth
+            - tag: radio
+              value: 2G
+        - uuid: 905809ad42af4f0790a2a84b399d99d5
+          name: 'Interface eth6 radio bssid'
+          type: DEPENDENT
+          key: radio.eth6.bssid
+          value_type: TEXT
+          description: 'MAC address of the access point radio. Uniquely identifies the wireless interface.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bssid
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: bssid
+            - tag: radio
+              value: 2G
+        - uuid: 1bf6b43080bf479fb9cf2d3ab29a18c5
+          name: 'Interface eth6 radio busy'
+          type: DEPENDENT
+          key: radio.eth6.busy
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: |
+            Calculated as 100 - chanim_idle. Represents the percentage of time the channel is in use (non-idle).
+            
+            Higher values indicate reduced available airtime and potential congestion. Use with retry_ratio and neighbors_share_of_busy_pct to determine cause (self, neighbors, or RF conditions).
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_idle
+            - type: JAVASCRIPT
+              parameters:
+                - 'return 100 - value;'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: busy
+            - tag: radio
+              value: 2G
+        - uuid: c6d75c431b7642c1bfbc195eee4c8aad
+          name: 'Interface eth6 radio bad plcp'
+          type: DEPENDENT
+          key: radio.eth6.chanim_badplcp
+          trends: '0'
+          description: 'Count or percentage of malformed PLCP headers detected. Indicates corrupted RF frames, often due to interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_badplcp
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_badplcp
+            - tag: radio
+              value: 2G
+        - uuid: da8eb9d5b28d4ccc83c1bd21b285c1b9
+          name: 'Interface eth6 radio chanim_badtx'
+          type: DEPENDENT
+          key: radio.eth6.chanim_badtx
+          trends: '0'
+          units: '%'
+          description: 'Percentage of sampled airtime used for failed or unsuccessful transmissions during the channel analysis window. Represents inefficient use of transmit airtime.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_badtx
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_badtx
+            - tag: radio
+              value: 2G
+        - uuid: 9a9c02462f324c9dad1fbc9aab908140
+          name: 'Interface eth6 radio chanim_busy'
+          type: DEPENDENT
+          key: radio.eth6.chanim_busy
+          trends: '0'
+          units: '%'
+          description: 'Total percentage of time the channel is busy (any RF activity). High values indicate congestion.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_busy
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_busy
+            - tag: radio
+              value: 2G
+        - uuid: 67eefd9382e14e15ae91f6aba2e8d333
+          name: 'Interface eth6 radio channel spec'
+          type: DEPENDENT
+          key: radio.eth6.chanim_chanspec
+          value_type: FLOAT
+          trends: '0'
+          description: 'Channel specification including primary channel and width (e.g., 161/80). Defines the RF operating parameters.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_chanspec
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '86400'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_chanspec
+            - tag: radio
+              value: 2G
+        - uuid: 3354134486194fb1b0a4fa2722ee4ce2
+          name: 'Interface eth6 radio low power state'
+          type: DEPENDENT
+          key: radio.eth6.chanim_doze
+          trends: '0'
+          units: '%'
+          description: 'Percentage of time the radio is in a low-power (doze) state. Typically near zero for active APs.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_doze
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_doze
+            - tag: radio
+              value: 2G
+        - uuid: 6cd9e0c8f6fe4abb811c98f42a526aa1
+          name: 'Interface eth6 radio rf  noise'
+          type: DEPENDENT
+          key: radio.eth6.chanim_glitch
+          trends: '0'
+          description: 'Physical-layer RF disturbance metric from channel analysis sampling. Reflects general noise or instability in the RF environment, including non-Wi-Fi interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_glitch
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_glitch
+            - tag: radio
+              value: 2G
+        - uuid: 814e2c74b86d46a8b44b928c6abea59a
+          name: 'Interface eth6 radio chanim_goodtx'
+          type: DEPENDENT
+          key: radio.eth6.chanim_goodtx
+          trends: '0'
+          units: '%'
+          description: 'Percentage of sampled airtime used for successful transmissions during the channel analysis window. Represents effective transmit airtime.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_goodtx
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_goodtx
+            - tag: radio
+              value: 2G
+        - uuid: c9c71274a67c4595bbf4b2aaa9de8693
+          name: 'Interface eth6 radio chanim_idle'
+          type: DEPENDENT
+          key: radio.eth6.chanim_idle
+          trends: '0'
+          units: '%'
+          description: 'Percentage of time the channel is idle (no RF energy detected). Higher values indicate more available airtime and less contention.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_idle
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_idle
+            - tag: radio
+              value: 2G
+        - uuid: 1d8edd6c18814f03ad7296f2fe0b30f8
+          name: 'Interface eth6 radio chanim_inbss'
+          type: DEPENDENT
+          key: radio.eth6.chanim_inbss
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used by devices within the same BSS (your network). Reflects internal network usage.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_inbss
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_inbss
+            - tag: radio
+              value: 2G
+        - uuid: f458a254eea2417ca20685e56f4c8127
+          name: 'Interface eth6 radio chanim_knoise'
+          type: DEPENDENT
+          key: radio.eth6.chanim_knoise
+          value_type: FLOAT
+          trends: '0'
+          units: dbm
+          description: 'Measured noise floor in dBm. Lower (more negative) values indicate a cleaner RF environment.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_knoise
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_knoise
+            - tag: radio
+              value: 2G
+        - uuid: eca3f41603ea42628119b01989416a6a
+          name: 'Interface eth6 radio chanim_nocat'
+          type: DEPENDENT
+          key: radio.eth6.chanim_nocat
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime with detected RF energy that is not classified as Wi-Fi. Often represents non-802.11 interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_nocat
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_nocat
+            - tag: radio
+              value: 2G
+        - uuid: 5e31dd68dcd642ae8e44150230ff2191
+          name: 'Interface eth6 radio no packet'
+          type: DEPENDENT
+          key: radio.eth6.chanim_nopkt
+          trends: '0'
+          description: 'Percentage of airtime where energy is detected but no decodable packets are present. Typically indicates noise or interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_nopkt
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_nopkt
+            - tag: radio
+              value: 2G
+        - uuid: ece72de24cab49b09b62553704fa18ee
+          name: 'Interface eth6 radio chanim_obss'
+          type: DEPENDENT
+          key: radio.eth6.chanim_obss
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used by overlapping neighboring networks (OBSS). High values indicate contention from nearby Wi-Fi networks.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_obss
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_obss
+            - tag: radio
+              value: 2G
+        - uuid: 3e7c1c92a392434aa8458efd9fe26b2b
+          name: 'Interface eth6 radio chanim_tx'
+          type: DEPENDENT
+          key: radio.eth6.chanim_tx
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used strictly for transmit activity. Subset of total busy time.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_tx
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_tx
+            - tag: radio
+              value: 2G
+        - uuid: 28ca1e7c7d06438dae480a816a5f7215
+          name: 'Interface eth6 radio chan available'
+          type: DEPENDENT
+          key: radio.eth6.chanim_txop
+          trends: '0'
+          units: '%'
+          description: 'Broadcom channel-analysis TX opportunity metric. This is not literal AP transmit airtime; it more closely reflects how much of the interval the channel was available for transmission.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_txop
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: chanim_txop
+            - tag: radio
+              value: 2G
+        - uuid: b6ca4546c9364cb7a665044d84f613c8
+          name: 'Interface eth6 radio channel'
+          type: DEPENDENT
+          key: radio.eth6.channel
+          trends: '0'
+          description: 'Primary operating channel number. Determines frequency and regulatory constraints.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.channel
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: channel
+            - tag: radio
+              value: 2G
+        - uuid: f20a9815ff034a86996f5828aaee834f
+          name: 'Interface eth6 radio clients'
+          type: DEPENDENT
+          key: radio.eth6.clients
+          trends: '0'
+          description: 'Number of currently associated client devices. Useful for understanding load on the AP.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.clients
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: clients
+            - tag: radio
+              value: 2G
+        - uuid: 34cea823909b42a48db42e21439acbfb
+          name: 'Interface eth6 radio fail_ratio'
+          type: DEPENDENT
+          key: radio.eth6.fail_ratio
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Ratio of failed transmissions to total transmissions. Higher values indicate reliability issues.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.fail_ratio
+            - type: MULTIPLIER
+              parameters:
+                - '100'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: fail_ratio
+            - tag: radio
+              value: 2G
+        - uuid: 657d6add882343ae8cedabef6cef1b36
+          name: 'Interface eth6 radio neighbors_share_of_busy_pct'
+          type: DEPENDENT
+          key: radio.eth6.neighbors_share_of_busy_pct
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Percentage of busy airtime attributed to neighboring networks. High values indicate external contention dominance.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.neighbors_share_of_busy_pct
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: neighbors_share_of_busy_pct
+            - tag: radio
+              value: 2G
+        - uuid: 1b4dde4d15624e11b07c59932b1f727d
+          name: 'Interface eth6 radio noise'
+          type: DEPENDENT
+          key: radio.eth6.noise
+          value_type: FLOAT
+          trends: '0'
+          units: dbm
+          description: 'Measured background noise level in dBm. Lower values indicate better signal conditions.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.noise
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: noise
+            - tag: radio
+              value: 2G
+        - uuid: 97f8d13cdfa14c84a77ab4abe184f343
+          name: 'Interface eth6 radio QBSS channel utilization'
+          type: DEPENDENT
+          key: radio.eth6.qbss_utilization
+          trends: '0'
+          description: 'Channel utilization from 802.11 QBSS Load (0–255 scale). Represents WiFi channel occupancy and can be converted to percentage for comparison with other airtime metrics.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.qbss_utilization
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: qbss_utilization
+            - tag: radio
+              value: 2G
+        - uuid: 387a9bdf061945d4a4b58428ab1c60c1
+          name: 'Interface eth6 radio retry_ratio'
+          type: DEPENDENT
+          key: radio.eth6.retry_ratio
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Ratio of retransmissions to total transmissions. Higher values indicate degraded link quality.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.retry_ratio
+            - type: MULTIPLIER
+              parameters:
+                - '100'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: retry_ratio
+            - tag: radio
+              value: 2G
+        - uuid: 2178faf5a6614b09a1eab7c36e2e7f12
+          name: 'Interface eth6 radio rxbadplcp'
+          type: DEPENDENT
+          key: radio.eth6.rxbadplcp
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of received frames with invalid PLCP headers. Indicates RF corruption or interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxbadplcp
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: rxbadplcp
+            - tag: radio
+              value: 2G
+        - uuid: 922067b9aabd44adbf8f6663c88c99d6
+          name: 'Interface eth6 radio rxbeaconobss'
+          type: DEPENDENT
+          key: radio.eth6.rxbeaconobss
+          trends: '0'
+          description: 'Number of beacons received from neighboring networks. Indicates density of nearby APs.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxbeaconobss
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: rxbeaconobss
+            - tag: radio
+              value: 2G
+        - uuid: 06328474884f4d22bf6a680fc7b2a3c2
+          name: 'Interface eth6 radio rx bytes'
+          type: DEPENDENT
+          key: radio.eth6.rxbyte
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          description: 'Total bytes received by the radio. Represents inbound traffic volume.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxbyte
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-8'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: rxbyte
+            - tag: radio
+              value: 2G
+        - uuid: 96b65f3579e9433aa718299d2a003e55
+          name: 'Interface eth6 radio rxcrc'
+          type: DEPENDENT
+          key: radio.eth6.rxcrc
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of frames received with CRC errors. High values suggest interference or poor signal quality.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxcrc
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: rxcrc
+            - tag: radio
+              value: 2G
+        - uuid: c45129757af241889328d0a6a4ff24eb
+          name: 'Interface eth6 radio rx crs glitch'
+          type: DEPENDENT
+          key: radio.eth6.rxcrsglitch
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of invalid carrier-sense detections during frame reception. Indicates the radio is misinterpreting or failing to decode incoming Wi-Fi signals.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxcrsglitch
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: rxcrsglitch
+            - tag: radio
+              value: 2G
+        - uuid: 71cecaa3329f48da8869e4659b8173dc
+          name: 'Interface eth6 radio rx frame'
+          type: DEPENDENT
+          key: radio.eth6.rxframe
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of frames received. Indicates inbound packet activity.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxframe
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-1'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: rxframe
+            - tag: radio
+              value: 2G
+        - uuid: 000c1a42243e43369e0546709cecec3c
+          name: 'Interface eth6 radio ssid'
+          type: DEPENDENT
+          key: radio.eth6.ssid
+          value_type: TEXT
+          description: 'Broadcast network name. Identifies the wireless network.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.ssid
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '86400'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: ssid
+            - tag: radio
+              value: 2G
+        - uuid: 62d2bbdcc8f54e4ea17312ccedda6473
+          name: 'Interface eth6 radio txbcnloss'
+          type: DEPENDENT
+          key: radio.eth6.txbcnloss
+          trends: '0'
+          units: '%'
+          description: 'Number of scheduled beacon transmissions the AP failed to send due to lack of airtime. Non-zero values indicate channel contention or congestion preventing timely beacon transmission.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txbcnloss
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txbcnloss
+            - tag: radio
+              value: 2G
+        - uuid: a96444afbd1546a1ba29d6fa13ea2aa5
+          name: 'Interface eth6 radio tx bytes'
+          type: DEPENDENT
+          key: radio.eth6.txbyte
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          description: 'Total bytes transmitted by the radio. Represents outbound traffic volume.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txbyte
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txbyte
+            - tag: radio
+              value: 2G
+        - uuid: e40f9fdc5fb749bfbe5b38c5b77c5757
+          name: 'Interface eth6 radio txdropped'
+          type: DEPENDENT
+          key: radio.eth6.txdropped
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of packets dropped before transmission. May indicate buffer exhaustion or congestion.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txdropped
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txdropped
+            - tag: radio
+              value: 2G
+        - uuid: b520a62a4b654c008317e07848dc8778
+          name: 'Interface eth6 radio failed tx attempts'
+          type: DEPENDENT
+          key: radio.eth6.txfail
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of failed transmit attempts. High values may indicate poor link quality or excessive interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txfail
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txfail
+            - tag: radio
+              value: 2G
+        - uuid: 8be89a80a79a4db4a8dc3f2f777a711d
+          name: 'Interface eth6 radio tx frame'
+          type: DEPENDENT
+          key: radio.eth6.txframe
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of frames transmitted. Indicates outbound packet activity.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txframe
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txframe
+            - tag: radio
+              value: 2G
+        - uuid: 0ff0fa4d06d44f768d3c84fb47f4bcca
+          name: 'Interface eth6 radio tx lost'
+          type: DEPENDENT
+          key: radio.eth6.txlost
+          trends: '0'
+          description: 'Number of transmitted frames that were completely lost. Persistent non-zero values suggest severe connectivity issues.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txlost
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txlost
+            - tag: radio
+              value: 2G
+        - uuid: 6d29362462c64e96b281379b068e7369
+          name: 'Interface eth6 radio success ratio'
+          type: DEPENDENT
+          key: radio.eth6.txper_rts
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Percentage of successful RTS/CTS exchanges. High values indicate reliable channel access, while drops may suggest contention or hidden node issues.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txper_rts
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txper_rts
+            - tag: radio
+              value: 2G
+        - uuid: f37e2b845c8f41bd9f810cec1a9eb425
+          name: 'Interface eth6 radio txper_ucastdt'
+          type: DEPENDENT
+          key: radio.eth6.txper_ucastdt
+          trends: '0'
+          units: '%'
+          description: 'Percentage of unicast data transmission failures. High values suggest poor link quality.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txper_ucastdt
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txper_ucastdt
+            - tag: radio
+              value: 2G
+        - uuid: 6fc92f0d1a3b48d38e5f3424507424cf
+          name: 'Interface eth6 radio transmit power'
+          type: DEPENDENT
+          key: radio.eth6.txpower_dbm
+          trends: '0'
+          units: dbm
+          description: 'Transmit power of the radio in dBm. Higher values increase range but can also contribute to interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txpower_dbm
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txpower_dbm
+            - tag: radio
+              value: 2G
+        - uuid: 650c1218910949759023e043f6a1fe06
+          name: 'Interface eth6 radio tx retrans'
+          type: DEPENDENT
+          key: radio.eth6.txretrans
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of retransmitted frames. High values indicate packet loss or unstable wireless conditions.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txretrans
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth6]'
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: metric
+              value: txretrans
+            - tag: radio
+              value: 2G
+        - uuid: c26e649110ee450388cdfa9a1b22d663
+          name: 'Interface eth7 radio airtime_self'
+          type: DEPENDENT
+          key: radio.eth7.airtime_self
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used by this AP and its clients. Represents your network’s share of the channel.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.airtime_self
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: airtime_self
+            - tag: radio
+              value: 5G
+        - uuid: eb18543eef824551b4a7d0d6e6bd1cc1
+          name: 'Interface eth7 radio bandwidth'
+          type: DEPENDENT
+          key: radio.eth7.bandwidth
+          trends: '0'
+          units: Mhz
+          description: 'Channel width in MHz (e.g., 20/40/80). Wider channels provide higher throughput but are more susceptible to interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bandwidth
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '3600'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: bandwidth
+            - tag: radio
+              value: 5G
+        - uuid: 444198f1d4124d7b9627066a8d052154
+          name: 'Interface eth7 radio bssid'
+          type: DEPENDENT
+          key: radio.eth7.bssid
+          value_type: TEXT
+          description: 'MAC address of the access point radio. Uniquely identifies the wireless interface.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.bssid
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: bssid
+            - tag: radio
+              value: 5G
+        - uuid: 136919788d994da3a246260ea6f75c99
+          name: 'Interface eth7 radio busy'
+          type: DEPENDENT
+          key: radio.eth7.busy
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: |
+            Calculated as 100 - chanim_idle. Represents the percentage of time the channel is in use (non-idle).
+            
+            Higher values indicate reduced available airtime and potential congestion. Use with retry_ratio and neighbors_share_of_busy_pct to determine cause (self, neighbors, or RF conditions).
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_idle
+            - type: JAVASCRIPT
+              parameters:
+                - 'return 100 - value;'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: busy
+            - tag: radio
+              value: 5G
+        - uuid: 12b44d57af22464ba2eec66ce8f812ea
+          name: 'Interface eth7 radio bad plcp'
+          type: DEPENDENT
+          key: radio.eth7.chanim_badplcp
+          trends: '0'
+          description: 'Count or percentage of malformed PLCP headers detected. Indicates corrupted RF frames, often due to interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_badplcp
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_badplcp
+            - tag: radio
+              value: 5G
+        - uuid: 53414208719f48a69dcd3543980c94d9
+          name: 'Interface eth7 radio chanim_badtx'
+          type: DEPENDENT
+          key: radio.eth7.chanim_badtx
+          trends: '0'
+          units: '%'
+          description: 'Percentage of sampled airtime used for failed or unsuccessful transmissions during the channel analysis window. Represents inefficient use of transmit airtime.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_badtx
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_badtx
+            - tag: radio
+              value: 5G
+        - uuid: 1558fa11a907483fbb4bc0203193aa01
+          name: 'Interface eth7 radio chanim_busy'
+          type: DEPENDENT
+          key: radio.eth7.chanim_busy
+          trends: '0'
+          units: '%'
+          description: 'Total percentage of time the channel is busy (any RF activity). High values indicate congestion.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_busy
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_busy
+            - tag: radio
+              value: 5G
+        - uuid: 88808cb009ef497095b8ba68864cf146
+          name: 'Interface eth7 radio channel spec'
+          type: DEPENDENT
+          key: radio.eth7.chanim_chanspec
+          value_type: FLOAT
+          trends: '0'
+          description: 'Channel specification including primary channel and width (e.g., 161/80). Defines the RF operating parameters.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_chanspec
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '86400'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_chanspec
+            - tag: radio
+              value: 5G
+        - uuid: 8681e6cc037b429c91fc8d8179ca8343
+          name: 'Interface eth7 radio low power state'
+          type: DEPENDENT
+          key: radio.eth7.chanim_doze
+          trends: '0'
+          units: '%'
+          description: 'Percentage of time the radio is in a low-power (doze) state. Typically near zero for active APs.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_doze
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_doze
+            - tag: radio
+              value: 5G
+        - uuid: 71e0c7c57f1548cd95d588c23439a4f6
+          name: 'Interface eth7 radio rf  noise'
+          type: DEPENDENT
+          key: radio.eth7.chanim_glitch
+          trends: '0'
+          description: 'Physical-layer RF disturbance metric from channel analysis sampling. Reflects general noise or instability in the RF environment, including non-Wi-Fi interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_glitch
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_glitch
+            - tag: radio
+              value: 5G
+        - uuid: addf4637645c4494a64a1e5ff67abf9f
+          name: 'Interface eth7 radio chanim_goodtx'
+          type: DEPENDENT
+          key: radio.eth7.chanim_goodtx
+          trends: '0'
+          units: '%'
+          description: 'Percentage of sampled airtime used for successful transmissions during the channel analysis window. Represents effective transmit airtime.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_goodtx
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_goodtx
+            - tag: radio
+              value: 5G
+        - uuid: d3549123ae2b40119ef4e56ae674781e
+          name: 'Interface eth7 radio chanim_idle'
+          type: DEPENDENT
+          key: radio.eth7.chanim_idle
+          trends: '0'
+          units: '%'
+          description: 'Percentage of time the channel is idle (no RF energy detected). Higher values indicate more available airtime and less contention.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_idle
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_idle
+            - tag: radio
+              value: 5G
+        - uuid: 4561b76d6f944e7cb0c7d645a915f3d2
+          name: 'Interface eth7 radio chanim_inbss'
+          type: DEPENDENT
+          key: radio.eth7.chanim_inbss
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used by devices within the same BSS (your network). Reflects internal network usage.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_inbss
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_inbss
+            - tag: radio
+              value: 5G
+        - uuid: ca240fe89e2643489e764297185d892b
+          name: 'Interface eth7 radio chanim_knoise'
+          type: DEPENDENT
+          key: radio.eth7.chanim_knoise
+          value_type: FLOAT
+          trends: '0'
+          units: dbm
+          description: 'Measured noise floor in dBm. Lower (more negative) values indicate a cleaner RF environment.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_knoise
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_knoise
+            - tag: radio
+              value: 5G
+        - uuid: d944da648f414c7db9fb1ac433916f4c
+          name: 'Interface eth7 radio chanim_nocat'
+          type: DEPENDENT
+          key: radio.eth7.chanim_nocat
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime with detected RF energy that is not classified as Wi-Fi. Often represents non-802.11 interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_nocat
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_nocat
+            - tag: radio
+              value: 5G
+        - uuid: f6e49b7217714daaa94067bafb00644e
+          name: 'Interface eth7 radio no packet'
+          type: DEPENDENT
+          key: radio.eth7.chanim_nopkt
+          trends: '0'
+          description: 'Percentage of airtime where energy is detected but no decodable packets are present. Typically indicates noise or interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_nopkt
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_nopkt
+            - tag: radio
+              value: 5G
+        - uuid: faa1280d320d4bab8005e550db0eda5f
+          name: 'Interface eth7 radio chanim_obss'
+          type: DEPENDENT
+          key: radio.eth7.chanim_obss
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used by overlapping neighboring networks (OBSS). High values indicate contention from nearby Wi-Fi networks.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_obss
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_obss
+            - tag: radio
+              value: 5G
+        - uuid: e2ba493a061c46e5b4c1019f1cb53647
+          name: 'Interface eth7 radio chanim_tx'
+          type: DEPENDENT
+          key: radio.eth7.chanim_tx
+          trends: '0'
+          units: '%'
+          description: 'Percentage of airtime used strictly for transmit activity. Subset of total busy time.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_tx
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_tx
+            - tag: radio
+              value: 5G
+        - uuid: 313548279b9b4bcea93a218b5bacdf2b
+          name: 'Interface eth7 radio chan available'
+          type: DEPENDENT
+          key: radio.eth7.chanim_txop
+          trends: '0'
+          units: '%'
+          description: 'Broadcom channel-analysis TX opportunity metric. This is not literal AP transmit airtime; it more closely reflects how much of the interval the channel was available for transmission.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.chanim_txop
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: chanim_txop
+            - tag: radio
+              value: 5G
+        - uuid: 29da2a40939f4a799f8f9f5a1194b4de
+          name: 'Interface eth7 radio channel'
+          type: DEPENDENT
+          key: radio.eth7.channel
+          trends: '0'
+          description: 'Primary operating channel number. Determines frequency and regulatory constraints.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.channel
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: channel
+            - tag: radio
+              value: 5G
+        - uuid: 8f8220a0fea44d03bf210fc2a35b54be
+          name: 'Interface eth7 radio clients'
+          type: DEPENDENT
+          key: radio.eth7.clients
+          trends: '0'
+          description: 'Number of currently associated client devices. Useful for understanding load on the AP.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.clients
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: clients
+            - tag: radio
+              value: 5G
+        - uuid: 778e46cc933243ae895660c455c07369
+          name: 'Interface eth7 radio fail_ratio'
+          type: DEPENDENT
+          key: radio.eth7.fail_ratio
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Ratio of failed transmissions to total transmissions. Higher values indicate reliability issues.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.fail_ratio
+            - type: MULTIPLIER
+              parameters:
+                - '100'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: fail_ratio
+            - tag: radio
+              value: 5G
+        - uuid: 499d5e17ac354dadbfcb5e796f844aab
+          name: 'Interface eth7 radio neighbors_share_of_busy_pct'
+          type: DEPENDENT
+          key: radio.eth7.neighbors_share_of_busy_pct
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Percentage of busy airtime attributed to neighboring networks. High values indicate external contention dominance.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.neighbors_share_of_busy_pct
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: neighbors_share_of_busy_pct
+            - tag: radio
+              value: 5G
+        - uuid: 42d76d4441904a6298b5a903c6f99092
+          name: 'Interface eth7 radio noise'
+          type: DEPENDENT
+          key: radio.eth7.noise
+          value_type: FLOAT
+          trends: '0'
+          units: dbm
+          description: 'Measured background noise level in dBm. Lower values indicate better signal conditions.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.noise
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: noise
+            - tag: radio
+              value: 5G
+        - uuid: 30be179c25214fe28538bb8db63625d9
+          name: 'Interface eth7 radio QBSS channel utilization'
+          type: DEPENDENT
+          key: radio.eth7.qbss_utilization
+          trends: '0'
+          description: 'Channel utilization from 802.11 QBSS Load (0–255 scale). Represents WiFi channel occupancy and can be converted to percentage for comparison with other airtime metrics.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.qbss_utilization
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: qbss_utilization
+            - tag: radio
+              value: 5G
+        - uuid: 28ee3a27c8dc4458a6333c6e238e0376
+          name: 'Interface eth7 radio retry_ratio'
+          type: DEPENDENT
+          key: radio.eth7.retry_ratio
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Ratio of retransmissions to total transmissions. Higher values indicate degraded link quality.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.retry_ratio
+            - type: MULTIPLIER
+              parameters:
+                - '100'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: retry_ratio
+            - tag: radio
+              value: 5G
+        - uuid: 05196e39168949b1a68582bdfecd1d6d
+          name: 'Interface eth7 radio rxbadplcp'
+          type: DEPENDENT
+          key: radio.eth7.rxbadplcp
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of received frames with invalid PLCP headers. Indicates RF corruption or interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxbadplcp
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: rxbadplcp
+            - tag: radio
+              value: 5G
+        - uuid: 9ab6defefe7b433090656d15bd9df974
+          name: 'Interface eth7 radio rxbeaconobss'
+          type: DEPENDENT
+          key: radio.eth7.rxbeaconobss
+          trends: '0'
+          description: 'Number of beacons received from neighboring networks. Indicates density of nearby APs.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxbeaconobss
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: rxbeaconobss
+            - tag: radio
+              value: 5G
+        - uuid: d37b5e4eda2644f4b168bef22e742f9d
+          name: 'Interface eth7 radio rx bytes'
+          type: DEPENDENT
+          key: radio.eth7.rxbyte
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          description: 'Total bytes received by the radio. Represents inbound traffic volume.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxbyte
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-8'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: rxbyte
+            - tag: radio
+              value: 5G
+        - uuid: 5b14a7a98612416c949b044177a6cee8
+          name: 'Interface eth7 radio rxcrc'
+          type: DEPENDENT
+          key: radio.eth7.rxcrc
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of frames received with CRC errors. High values suggest interference or poor signal quality.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxcrc
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: rxcrc
+            - tag: radio
+              value: 5G
+        - uuid: cd2ccb3f2a624ed89466db65e01f0888
+          name: 'Interface eth7 radio rx crs glitch'
+          type: DEPENDENT
+          key: radio.eth7.rxcrsglitch
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of invalid carrier-sense detections during frame reception. Indicates the radio is misinterpreting or failing to decode incoming Wi-Fi signals.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxcrsglitch
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: rxcrsglitch
+            - tag: radio
+              value: 5G
+        - uuid: 8fcba06bf2034a7dbc6d817d2253c7be
+          name: 'Interface eth7 radio rx frame'
+          type: DEPENDENT
+          key: radio.eth7.rxframe
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of frames received. Indicates inbound packet activity.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.rxframe
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '-1'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: rxframe
+            - tag: radio
+              value: 5G
+        - uuid: e9508cd1f1834f258535bc40083dc32c
+          name: 'Interface eth7 radio ssid'
+          type: DEPENDENT
+          key: radio.eth7.ssid
+          value_type: TEXT
+          description: 'Broadcast network name. Identifies the wireless network.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.ssid
+            - type: DISCARD_UNCHANGED_HEARTBEAT
+              parameters:
+                - '86400'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: ssid
+            - tag: radio
+              value: 5G
+        - uuid: 8812fde408364fae86e2ec0c65ab2867
+          name: 'Interface eth7 radio txbcnloss'
+          type: DEPENDENT
+          key: radio.eth7.txbcnloss
+          trends: '0'
+          units: '%'
+          description: 'Number of scheduled beacon transmissions the AP failed to send due to lack of airtime. Non-zero values indicate channel contention or congestion preventing timely beacon transmission.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txbcnloss
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txbcnloss
+            - tag: radio
+              value: 5G
+        - uuid: aa8aef30662144f78066113e6e68ee02
+          name: 'Interface eth7 radio tx bytes'
+          type: DEPENDENT
+          key: radio.eth7.txbyte
+          value_type: FLOAT
+          trends: '0'
+          units: bps
+          description: 'Total bytes transmitted by the radio. Represents outbound traffic volume.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txbyte
+            - type: CHANGE_PER_SECOND
+            - type: MULTIPLIER
+              parameters:
+                - '8'
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txbyte
+            - tag: radio
+              value: 5G
+        - uuid: 98f6d4165cc44790a64e8c3a52a3a8ed
+          name: 'Interface eth7 radio txdropped'
+          type: DEPENDENT
+          key: radio.eth7.txdropped
+          value_type: FLOAT
+          trends: '0'
+          description: 'Number of packets dropped before transmission. May indicate buffer exhaustion or congestion.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txdropped
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txdropped
+            - tag: radio
+              value: 5G
+        - uuid: b5b335576e244cb69aef6bfed88c1699
+          name: 'Interface eth7 radio failed tx attempts'
+          type: DEPENDENT
+          key: radio.eth7.txfail
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of failed transmit attempts. High values may indicate poor link quality or excessive interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txfail
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txfail
+            - tag: radio
+              value: 5G
+        - uuid: b785808bfa9c45d9b8c22aa9a17f4c3c
+          name: 'Interface eth7 radio tx frame'
+          type: DEPENDENT
+          key: radio.eth7.txframe
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of frames transmitted. Indicates outbound packet activity.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txframe
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txframe
+            - tag: radio
+              value: 5G
+        - uuid: 91d76ea1ce4c42b78ee47ac9ac03ec6b
+          name: 'Interface eth7 radio tx lost'
+          type: DEPENDENT
+          key: radio.eth7.txlost
+          trends: '0'
+          description: 'Number of transmitted frames that were completely lost. Persistent non-zero values suggest severe connectivity issues.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txlost
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txlost
+            - tag: radio
+              value: 5G
+        - uuid: 299f20512254450d8718603eee590a8d
+          name: 'Interface eth7 radio success ratio'
+          type: DEPENDENT
+          key: radio.eth7.txper_rts
+          value_type: FLOAT
+          trends: '0'
+          units: '%'
+          description: 'Percentage of successful RTS/CTS exchanges. High values indicate reliable channel access, while drops may suggest contention or hidden node issues.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txper_rts
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txper_rts
+            - tag: radio
+              value: 5G
+        - uuid: eed3d179e66d4fbcbf0486ec52046782
+          name: 'Interface eth7 radio txper_ucastdt'
+          type: DEPENDENT
+          key: radio.eth7.txper_ucastdt
+          trends: '0'
+          units: '%'
+          description: 'Percentage of unicast data transmission failures. High values suggest poor link quality.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txper_ucastdt
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txper_ucastdt
+            - tag: radio
+              value: 5G
+        - uuid: c857e9f3147d4c4a9df752054129d9ed
+          name: 'Interface eth7 radio transmit power'
+          type: DEPENDENT
+          key: radio.eth7.txpower_dbm
+          trends: '0'
+          units: dbm
+          description: 'Transmit power of the radio in dBm. Higher values increase range but can also contribute to interference.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txpower_dbm
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txpower_dbm
+            - tag: radio
+              value: 5G
+        - uuid: 0f2e088c9e32402c891682dc2d38bc7f
+          name: 'Interface eth7 radio tx retrans'
+          type: DEPENDENT
+          key: radio.eth7.txretrans
+          value_type: FLOAT
+          trends: '0'
+          description: 'Total number of retransmitted frames. High values indicate packet loss or unstable wireless conditions.'
+          preprocessing:
+            - type: JSONPATH
+              parameters:
+                - $.txretrans
+            - type: CHANGE_PER_SECOND
+          master_item:
+            key: 'radio.stats[eth7]'
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: metric
+              value: txretrans
+            - tag: radio
+              value: 5G
+        - uuid: e8234ecf79494aceab981f7875e93170
+          name: 'Interface eth6 radio stats'
+          key: 'radio.stats[eth6]'
+          value_type: TEXT
+          tags:
+            - tag: interface
+              value: eth6
+            - tag: radio
+              value: 2G
+        - uuid: 934fe75c6cce4ac48f105f5437ed51ab
+          name: 'Interface eth7 radio stats'
+          key: 'radio.stats[eth7]'
+          value_type: TEXT
+          tags:
+            - tag: interface
+              value: eth7
+            - tag: radio
+              value: 5G
+      discovery_rules:
+        - uuid: 3231483797024cf7ae8164e7613163d0
+          name: 'discover stations'
+          type: DEPENDENT
+          key: discover.client.stats
+          item_prototypes:
+            - uuid: b918e1c2024a4742b0ee2a0dae43e023
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} RSSI'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},avg_rssi]'
+              value_type: FLOAT
+              units: dbm
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].avg_rssi.first()'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: avg_rssi
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: 62b9396721724b139a1be132a106c19a
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} idle seconds'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},idle_seconds]'
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].idle_seconds.first()'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: idle_seconds
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: 634c44f76b4a4ee8a18df813237bcc53
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} in network seconds'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},in_network_seconds]'
+              units: s
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].in_network_seconds.first()'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: in_network_seconds
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: f513b189432f4e13923f9f0befc192f4
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} rx_ucast_bytes'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},rx_ucast_bytes]'
+              units: b
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].rx_ucast_bytes.first()'
+                  error_handler: DISCARD_VALUE
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: rx_ucast_bytes
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: 5de603ad31de4588821caada5869533d
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} rx_ucast_pkts'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},rx_ucast_pkts]'
+              units: b
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].rx_ucast_pkts.first()'
+                  error_handler: DISCARD_VALUE
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '8'
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: rx_ucast_pkts
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: c032b5ba7ebf4f6cbacad6075dea0f9d
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} SNR'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},snr]'
+              units: dbm
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].snr.first()'
+                  error_handler: DISCARD_VALUE
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: snr
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: e3cc2e65276a4ca5b3709b404292075f
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} tx_ucast_bytes'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},tx_ucast_bytes]'
+              value_type: FLOAT
+              units: b
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].tx_ucast_bytes.first()'
+                  error_handler: DISCARD_VALUE
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '-8'
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: tx_ucast_bytes
+                - tag: radio
+                  value: '{#RADIO}'
+            - uuid: ea594d5563d0412096503dd181dbb8dc
+              name: 'Radio: {#RADIO} Client:{#CLIENT} IP:{#IP} tx_ucast_pkts'
+              type: DEPENDENT
+              key: 'client.stats[{#CLIENT},tx_ucast_pkts]'
+              value_type: FLOAT
+              units: pkts
+              preprocessing:
+                - type: JSONPATH
+                  parameters:
+                    - '$[?(@.client == "{#CLIENT}")].tx_ucast_pkts.first()'
+                  error_handler: DISCARD_VALUE
+                - type: SIMPLE_CHANGE
+                - type: MULTIPLIER
+                  parameters:
+                    - '-1'
+              master_item:
+                key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+              tags:
+                - tag: client
+                  value: '{#CLIENT}'
+                - tag: host
+                  value: '{#HOST}'
+                - tag: interface
+                  value: '{#INTERFACE}'
+                - tag: ip
+                  value: '{#IP}'
+                - tag: mac
+                  value: '{#CLIENT}'
+                - tag: metric
+                  value: tx_ucast_pkts
+                - tag: radio
+                  value: '{#RADIO}'
+          graph_prototypes:
+            - uuid: 564b89ca4e3447a79c66d752615a6317
+              name: 'Client: {#CLIENT} IP:{#IP} TX/RX bytes'
+              yaxismax: '0'
+              graph_items:
+                - color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: 'ASUSWRT WiFi stats'
+                    key: 'client.stats[{#CLIENT},rx_ucast_bytes]'
+                - sortorder: '1'
+                  color: '274482'
+                  calc_fnc: ALL
+                  item:
+                    host: 'ASUSWRT WiFi stats'
+                    key: 'client.stats[{#CLIENT},tx_ucast_bytes]'
+          host_prototypes:
+            - uuid: b474da3998c6432184c1259aebf967c7
+              host: '{{#CLIENT}.regrepl(":", "")}'
+              name: '{#CLIENT_HOSTNAME}-{{#CLIENT}.regrepl(":", "")}'
+              inventory_mode: AUTOMATIC
+              group_links:
+                - group:
+                    name: wifi
+              group_prototypes:
+                - name: '{#HOST}'
+              templates:
+                - name: 'Asus Station Data'
+              macros:
+                - macro: '{$CLIENT}'
+                  value: '{#CLIENT}'
+                - macro: '{$HOST}'
+                  value: '{#HOST}'
+                - macro: '{$INTERFACE}'
+                  value: '{#INTERFACE}'
+                - macro: '{$IP}'
+                  value: '{#IP}'
+                - macro: '{$RADIO}'
+                  value: '{#RADIO}'
+              tags:
+                - tag: IP
+                  value: '{#IP}'
+          master_item:
+            key: 'client.stats["-i",{$WIRELESS_INTERFACE_MAPPINGS},"-m",{$MAPPING_FILE}]'
+          lld_macro_paths:
+            - lld_macro: '{#CLIENT_HOSTNAME}'
+              path: $.client_hostname
+            - lld_macro: '{#CLIENT}'
+              path: $.client
+            - lld_macro: '{#HOST}'
+              path: $.host
+            - lld_macro: '{#INTERFACE}'
+              path: $.interface
+            - lld_macro: '{#IP}'
+              path: $.ip
+            - lld_macro: '{#RADIO}'
+              path: $.radio
+      tags:
+        - tag: driver
+          value: broadcom_wl
+        - tag: feature
+          value: wifi_station_monitoring
+        - tag: platform
+          value: asuswrt
+        - tag: venodor
+          value: asus
+      macros:
+        - macro: '{$WIRELESS_INTERFACE_MAPPINGS}'
+          value: 'eth7:5G eth6:2G wl0.1:2G_1'
+      dashboards:
+        - uuid: 21b27d84b93f4cc1a2d272db3480d59d
+          name: '2G radio'
+          pages:
+            - widgets:
+                - type: item
+                  width: '12'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: STRING
+                      name: description
+                      value: 'SSID:'
+                    - type: INTEGER
+                      name: desc_h_pos
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_size
+                      value: '50'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.ssid
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                - type: gauge
+                  'y': '1'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.busy
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '30'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: item
+                  'y': '4'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.retry_ratio
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '15'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '30'
+                - type: gauge
+                  'y': '7'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.noise
+                    - type: STRING
+                      name: max
+                      value: '-70'
+                    - type: STRING
+                      name: min
+                      value: '-95'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '-95'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '-85'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FFBF00
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '-80'
+                    - type: STRING
+                      name: thresholds.3.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.3.threshold
+                      value: '-75'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: item
+                  x: '12'
+                  width: '12'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: STRING
+                      name: description
+                      value: 'BSSID:'
+                    - type: INTEGER
+                      name: desc_h_pos
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_size
+                      value: '50'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.bssid
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                - type: gauge
+                  x: '12'
+                  'y': '1'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.airtime_self
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '15'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '40'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: gauge
+                  x: '12'
+                  'y': '4'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.fail_ratio
+                    - type: STRING
+                      name: max
+                      value: '10'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '1'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '3'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: item
+                  x: '12'
+                  'y': '7'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.clients
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                - type: item
+                  x: '24'
+                  width: '12'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: STRING
+                      name: description
+                      value: 'Channel:'
+                    - type: INTEGER
+                      name: desc_h_pos
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_size
+                      value: '50'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.channel
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                - type: gauge
+                  x: '24'
+                  'y': '1'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.neighbors_share_of_busy_pct
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '30'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: gauge
+                  x: '24'
+                  'y': '4'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.qbss_utilization
+                    - type: STRING
+                      name: max
+                      value: '255'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '80'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '150'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: gauge
+                  x: '24'
+                  'y': '7'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth6.chanim_tx
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '20'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '50'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: svggraph
+                  x: '36'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Interface eth6 radio chanim_tx'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Interface eth6 radio chanim_inbss'
+                    - type: STRING
+                      name: ds.0.items.2
+                      value: 'Interface eth6 radio chanim_obss'
+                    - type: STRING
+                      name: ds.0.items.3
+                      value: 'Interface eth6 radio chanim_nocat'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: STRING
+                      name: ds.1.color
+                      value: 13191C
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'Interface eth6 radio chanim_busy'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '3'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '5'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: ZWJZO
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  x: '36'
+                  'y': '5'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Interface eth6 radio rx bytes'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Interface eth6 radio tx bytes'
+                    - type: STRING
+                      name: reference
+                      value: MZBLV
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+        - uuid: 080f57729aa8426bac7f0f537a6bba73
+          name: '5G radio'
+          pages:
+            - widgets:
+                - type: item
+                  width: '12'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: STRING
+                      name: description
+                      value: 'SSID:'
+                    - type: INTEGER
+                      name: desc_h_pos
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_size
+                      value: '50'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.ssid
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                - type: gauge
+                  'y': '1'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.busy
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '30'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: item
+                  'y': '4'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.retry_ratio
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '15'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '30'
+                - type: gauge
+                  'y': '7'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.noise
+                    - type: STRING
+                      name: max
+                      value: '-70'
+                    - type: STRING
+                      name: min
+                      value: '-95'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '-95'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '-85'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FFBF00
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '-80'
+                    - type: STRING
+                      name: thresholds.3.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.3.threshold
+                      value: '-75'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: item
+                  x: '12'
+                  width: '12'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: STRING
+                      name: description
+                      value: 'BSSID:'
+                    - type: INTEGER
+                      name: desc_h_pos
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_size
+                      value: '50'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.bssid
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                - type: gauge
+                  x: '12'
+                  'y': '1'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.airtime_self
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '15'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '40'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: gauge
+                  x: '12'
+                  'y': '4'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.fail_ratio
+                    - type: STRING
+                      name: max
+                      value: '10'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '1'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '3'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: item
+                  x: '12'
+                  'y': '7'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.clients
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '4'
+                    - type: INTEGER
+                      name: show.2
+                      value: '5'
+                - type: item
+                  x: '24'
+                  width: '12'
+                  height: '1'
+                  hide_header: 'YES'
+                  fields:
+                    - type: INTEGER
+                      name: decimal_places
+                      value: '0'
+                    - type: STRING
+                      name: description
+                      value: 'Channel:'
+                    - type: INTEGER
+                      name: desc_h_pos
+                      value: '0'
+                    - type: INTEGER
+                      name: desc_size
+                      value: '50'
+                    - type: INTEGER
+                      name: desc_v_pos
+                      value: '1'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.channel
+                    - type: INTEGER
+                      name: show.0
+                      value: '1'
+                    - type: INTEGER
+                      name: show.1
+                      value: '2'
+                - type: gauge
+                  x: '24'
+                  'y': '1'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.neighbors_share_of_busy_pct
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '30'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '60'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: gauge
+                  x: '24'
+                  'y': '4'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.qbss_utilization
+                    - type: STRING
+                      name: max
+                      value: '255'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '80'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: FF4000
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '150'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: gauge
+                  x: '24'
+                  'y': '7'
+                  width: '12'
+                  height: '3'
+                  fields:
+                    - type: INTEGER
+                      name: angle
+                      value: '270'
+                    - type: ITEM
+                      name: itemid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        key: radio.eth7.chanim_tx
+                    - type: STRING
+                      name: max
+                      value: '100'
+                    - type: STRING
+                      name: min
+                      value: '0'
+                    - type: INTEGER
+                      name: show.0
+                      value: '2'
+                    - type: INTEGER
+                      name: show.1
+                      value: '3'
+                    - type: INTEGER
+                      name: show.2
+                      value: '4'
+                    - type: INTEGER
+                      name: show.3
+                      value: '5'
+                    - type: STRING
+                      name: thresholds.0.color
+                      value: 00FF00
+                    - type: STRING
+                      name: thresholds.0.threshold
+                      value: '0'
+                    - type: STRING
+                      name: thresholds.1.color
+                      value: FFFF00
+                    - type: STRING
+                      name: thresholds.1.threshold
+                      value: '20'
+                    - type: STRING
+                      name: thresholds.2.color
+                      value: E65660
+                    - type: STRING
+                      name: thresholds.2.threshold
+                      value: '50'
+                    - type: INTEGER
+                      name: th_arc_size
+                      value: '10'
+                    - type: INTEGER
+                      name: th_show_arc
+                      value: '1'
+                    - type: INTEGER
+                      name: th_show_labels
+                      value: '1'
+                - type: svggraph
+                  x: '36'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Interface eth7 radio chanim_tx'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Interface eth7 radio chanim_inbss'
+                    - type: STRING
+                      name: ds.0.items.2
+                      value: 'Interface eth7 radio chanim_obss'
+                    - type: STRING
+                      name: ds.0.items.3
+                      value: 'Interface eth7 radio chanim_nocat'
+                    - type: INTEGER
+                      name: ds.0.stacked
+                      value: '1'
+                    - type: STRING
+                      name: ds.1.color
+                      value: 13191C
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.items.0
+                      value: 'Interface eth7 radio chanim_busy'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '3'
+                    - type: INTEGER
+                      name: legend_lines
+                      value: '5'
+                    - type: INTEGER
+                      name: legend_statistic
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: ZWJZO
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  x: '36'
+                  'y': '5'
+                  width: '36'
+                  height: '5'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: 'Interface eth7 radio rx bytes'
+                    - type: STRING
+                      name: ds.0.items.1
+                      value: 'Interface eth7 radio tx bytes'
+                    - type: STRING
+                      name: reference
+                      value: MZBLV
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+        - uuid: 06f170ff12c049549b93207ddb406221
+          name: 'Client RF'
+          pages:
+            - widgets:
+                - type: itemnavigator
+                  name: SNR
+                  width: '15'
+                  height: '8'
+                  fields:
+                    - type: INTEGER
+                      name: group_by.0.attribute
+                      value: '3'
+                    - type: STRING
+                      name: group_by.0.tag_name
+                      value: radio
+                    - type: STRING
+                      name: items.0
+                      value: '* SNR'
+                    - type: STRING
+                      name: reference
+                      value: MAOEH
+                - type: itemnavigator
+                  name: RSSI
+                  'y': '8'
+                  width: '15'
+                  height: '8'
+                  fields:
+                    - type: INTEGER
+                      name: group_by.0.attribute
+                      value: '3'
+                    - type: STRING
+                      name: group_by.0.tag_name
+                      value: radio
+                    - type: STRING
+                      name: items.0
+                      value: '* RSSI'
+                    - type: STRING
+                      name: reference
+                      value: LMZWX
+                - type: svggraph
+                  name: 'Client SNR'
+                  x: '15'
+                  width: '57'
+                  height: '8'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* SNR'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: ds.1.color.0
+                      value: FFFF00
+                    - type: INTEGER
+                      name: ds.1.dataset_type
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.itemids.0._reference
+                      value: MAOEH._itemid
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '7'
+                    - type: STRING
+                      name: reference
+                      value: YZDGP
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Client RSSI'
+                  x: '15'
+                  'y': '8'
+                  width: '57'
+                  height: '8'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '* RSSI'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: STRING
+                      name: ds.1.color.0
+                      value: FFD54F
+                    - type: INTEGER
+                      name: ds.1.dataset_type
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.1.itemids.0._reference
+                      value: LMZWX._itemid
+                    - type: INTEGER
+                      name: ds.1.transparency
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.1.width
+                      value: '7'
+                    - type: STRING
+                      name: reference
+                      value: MBECQ
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+        - uuid: 0c99be993171423bb91b21b119bad857
+          name: 'Client RX/TX'
+          pages:
+            - widgets:
+                - type: svggraph
+                  name: 'Station RX'
+                  width: '72'
+                  height: '7'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*rx_ucast_bytes*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: lefty_scale
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: EDZCI
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: svggraph
+                  name: 'Station TX'
+                  'y': '7'
+                  width: '72'
+                  height: '7'
+                  fields:
+                    - type: INTEGER
+                      name: ds.0.color_palette
+                      value: '0'
+                    - type: INTEGER
+                      name: ds.0.fill
+                      value: '0'
+                    - type: STRING
+                      name: ds.0.items.0
+                      value: '*tx_ucast_bytes*'
+                    - type: INTEGER
+                      name: ds.0.transparency
+                      value: '1'
+                    - type: INTEGER
+                      name: ds.0.width
+                      value: '2'
+                    - type: INTEGER
+                      name: lefty_scale
+                      value: '1'
+                    - type: STRING
+                      name: reference
+                      value: PIKUZ
+                    - type: INTEGER
+                      name: righty
+                      value: '0'
+                - type: graphprototype
+                  'y': '14'
+                  width: '72'
+                  height: '12'
+                  fields:
+                    - type: INTEGER
+                      name: columns
+                      value: '1'
+                    - type: GRAPH_PROTOTYPE
+                      name: graphid.0
+                      value:
+                        host: 'ASUSWRT WiFi stats'
+                        name: 'Client: {#CLIENT} IP:{#IP} TX/RX bytes'
+                    - type: STRING
+                      name: reference
+                      value: ARXYT
+                    - type: INTEGER
+                      name: rows
+                      value: '2'
